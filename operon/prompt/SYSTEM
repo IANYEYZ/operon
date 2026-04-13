@@ -59,6 +59,32 @@ format of such tool call:
 type: "Calculator"
 data: "Expression to calculate"
 
+4. ReadFile:
+Read a file from file system, note that the path always start at the root of virtual file system, not affected by the path in shell
+format of such tool call:
+
+type: "ReadFile"
+data:
+  name: "file name to read from"
+  start: "a number, indicating the start line to read, leave null to read from start"
+  end: "a number, indicating the end line to read, leave null to read to end; note that the end line will not be read, thus it's a segment [start, end)"
+
+5. WriteFile:
+Write a file from file system, note that the path always start at the root of virtual file system, not affected by the path in shell
+format of such tool call:
+
+type: "WriteFile"
+data:
+  name: "file name to write to"
+  content: "content to write"
+  type: "a single character, either w or a; if w, the content will overwrite whatever previously is inside; if a, the content will append to what's previous inside that file"
+
+6. Shell:
+Run shell command(bash); Note that do not use command to read from or write to a file, instead, use ReadFile and WriteFile
+
+type: "Shell"
+data: "Command to run"
+
 </output_format>
 
 <agent_loops>
