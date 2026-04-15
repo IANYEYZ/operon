@@ -35,8 +35,12 @@ class LLM:
         # print("Parsed LLM Response: ", yaml.safe_load(res))
         if saveMessage:
             self.messages.append(ASSISTANT(res))
-        return yaml.safe_load(res)
-
-print(os.getenv("DEEPSEEK_API_KEY"))
+        try:
+            return yaml.safe_load(res)
+        except:
+            return {
+                "type": "Error",
+                "data": "Yaml Error because of incorrect format, please try again"
+            }
 
 defaultLLM = LLM(apikey = os.getenv("DEEPSEEK_API_KEY"), model = "deepseek-chat")
