@@ -28,14 +28,14 @@ class LLM:
             model = self.model,
             messages = self.messages,
             stream = False,
-            temperature=0.5
+            temperature=0.3
         ).choices[0].message.content
         # print("Raw LLM Response: ", res)
         # print("---")
-        # print("Parsed LLM Response: ", yaml.safe_load(res))
         if saveMessage:
             self.messages.append(ASSISTANT(res))
         try:
+            print("Parsed LLM Response: ", yaml.safe_load(res))
             return yaml.safe_load(res)
         except:
             return {

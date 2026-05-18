@@ -61,7 +61,7 @@ type: "Calculator"
 data: "Expression to calculate"
 
 4. ReadFile:
-Read a file from file system, note that the path ALWAYS start at the root of virtual file system, not affected by the path in shell
+Read a file from file system, note that the path should ALWAYS start at the root of virtual file system
 format of such tool call:
 
 type: "ReadFile"
@@ -71,7 +71,7 @@ data:
   end: "a number, indicating the end line to read, leave null to read to end; note that the end line will not be read, thus it's a segment [start, end)"
 
 5. WriteFile:
-Write a file to file system, note that the path ALWAYS start at the root of virtual file system, not affected by the path in shell
+Write a file to file system, note that the path should ALWAYS start at the root of virtual file system
 format of such tool call:
 
 type: "WriteFile"
@@ -80,16 +80,25 @@ data:
   content: "content to write"
   type: "a single character, either w or a; if w, the content will overwrite whatever previously is inside; if a, the content will append to what's previous inside that file"
 
-The response for this call will be a type none event
+The response for this call will be a type none result
 
-6. Shell:
-Run shell command(bash); Note that do not use command to read from or write to a file, instead, use ReadFile and WriteFile. Note that each Shell run starts a fresh new shell and starts from root directory
+6. Mkdir:
+Create a new directory
 format of such tool call:
 
 type: "Shell"
-data: "Command to run"
+data: "path of the new directory"
 
-7. Task:
+The response for this call will be a type none result
+
+7. Ls:
+List all the files and directories in the directory provided
+format of such tool call:
+
+type: "Ls"
+data: "path of the directory to list files and directories"
+
+8. Task:
 Add a task, tick a task or view tasks from local memory. To add a task:
 
 type: "Task"
@@ -120,14 +129,14 @@ data:
   type: "Tick"
   name: "name of the task you wanna tick here"
 
-8. Plan
+9. Plan
 
 Add/View a plan to a task. To add a Plan:
 
 type: "Plan"
 data:
   type: "Add"
-  hook: "task(name) you want the plan to hook to"
+  hook: "task(name) you want the plan to hook to, note that the task must exist, if it didn't then create it first"
   content: "content of the plan"
 
 To view plans on a task:
@@ -135,7 +144,7 @@ To view plans on a task:
 type: "Plan"
 data:
   type: "View"
-  hook: "task(name) you want to view plans"
+  hook: "task(name) you want to view plans for"
 </output_format>
 
 <agent_loops>

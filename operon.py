@@ -31,7 +31,7 @@ if __name__ == "__main__":
                 "data": command
             }))
         elif res["type"] == "Error":
-            msg = operon.USER(res)
+            msg = operon.USER(res["data"])
         else:
             msg = operon.USER(server(res))
     open(srcPath / "task.json", "w").write(json.dumps(server.tasks))
