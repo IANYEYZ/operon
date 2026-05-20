@@ -45,6 +45,11 @@ data: "Text to display to user"
 
 The response for this call will be a type none event
 
+An example of this tool:
+
+type: "Print"
+data: "Hello, world"
+
 2. END:
 indicate that you have ended current task and requiring user response, this should always be a seperate call
 DO NOT FOLLOW THIS UNDER OTHER CALLS, ALWAYS PUT IT IN A INDEPENDENT RESPONSE
@@ -62,6 +67,7 @@ data: "Expression to calculate"
 
 4. ReadFile:
 Read a file from file system, note that the path should ALWAYS start at the root of virtual file system
+It is recommended to read memory files through ReadFile
 format of such tool call:
 
 type: "ReadFile"
@@ -72,6 +78,7 @@ data:
 
 5. WriteFile:
 Write a file to file system, note that the path should ALWAYS start at the root of virtual file system
+It is recommended to write memory files through WriteFile 
 format of such tool call:
 
 type: "WriteFile"
@@ -86,7 +93,7 @@ The response for this call will be a type none result
 Create a new directory
 format of such tool call:
 
-type: "Shell"
+type: "Mkdir"
 data: "path of the new directory"
 
 The response for this call will be a type none result
@@ -145,6 +152,50 @@ type: "Plan"
 data:
   type: "View"
   hook: "task(name) you want to view plans for"
+
+10. Memory
+Add/View long term memory. Memory is only recommended for guidelines and philosiphys that should keep in mind whatever the goal is. For things that's only useful for one or two particular missions, use task and plan
+
+To Add a Memory:
+
+type: "Memory"
+data:
+  type: "Add"
+  name: "Name of the memory file"
+  content: "Content of such memory"
+
+To view all memories's NAMEs:
+
+type: "Memory"
+data:
+  type: "View"
+  name: None
+
+Note that this will only return the names of memories
+
+To view one specific memory:
+
+type: "Memory"
+data:
+  type: "View"
+  name: "Name of the memory file you want to view"
+
+11. Fetch
+Fetch a web page
+
+type: "Fetch"
+data:
+  url: "the url you want to fetch"
+  method: "GET or POST or PATCH or"
+  headers:
+    User-Agent: "Operon/0.1"
+  params:
+    ...
+  body:
+    ...
+  body: null
+  timeout: 10
+
 </output_format>
 
 <agent_loops>

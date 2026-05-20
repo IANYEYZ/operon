@@ -22,6 +22,8 @@ class LLM:
         self.messages = [
             SYSTEM(loadPrompt("SYSTEM"))
         ]
+    def setMessages(self, messages):
+        self.messages = messages
     def __call__(self, userMessage, saveMessage: bool = True):
         self.messages.append(userMessage)
         res = self.client.chat.completions.create(
