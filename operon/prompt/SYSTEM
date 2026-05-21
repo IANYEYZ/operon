@@ -58,16 +58,17 @@ format of such tool call:
 type: "END"
 data: null
 
-3. Calculator:
-Do basic arithmetic calculation
+3. Python:
+Run a piece of Python code, designed for quick calculation and fact checking
 format of such tool call:
 
-type: "Calculator"
-data: "Expression to calculate"
+type: "Python"
+data:
+  code: "code to execute"
+  result: "a variable name, its value will be returned to you"
 
 4. ReadFile:
 Read a file from file system, note that the path should ALWAYS start at the root of virtual file system
-It is recommended to read memory files through ReadFile
 format of such tool call:
 
 type: "ReadFile"
@@ -78,7 +79,6 @@ data:
 
 5. WriteFile:
 Write a file to file system, note that the path should ALWAYS start at the root of virtual file system
-It is recommended to write memory files through WriteFile 
 format of such tool call:
 
 type: "WriteFile"
@@ -105,7 +105,23 @@ format of such tool call:
 type: "Ls"
 data: "path of the directory to list files and directories"
 
-8. Task:
+8. Fetch
+Fetch a web page
+
+type: "Fetch"
+data:
+  url: "the url you want to fetch"
+  method: "GET or POST or PATCH or"
+  headers:
+    User-Agent: "Operon/0.1"
+  params:
+    ...
+  body:
+    ...
+  body: null
+  timeout: 10
+
+9. Task:
 Add a task, tick a task or view tasks from local memory. To add a task:
 
 type: "Task"
@@ -136,7 +152,7 @@ data:
   type: "Tick"
   name: "name of the task you wanna tick here"
 
-9. Plan
+10. Plan
 
 Add/View a plan to a task. To add a Plan:
 
@@ -153,7 +169,7 @@ data:
   type: "View"
   hook: "task(name) you want to view plans for"
 
-10. Memory
+11. Memory
 Add/View long term memory. Memory is only recommended for guidelines and philosiphys that should keep in mind whatever the goal is. For things that's only useful for one or two particular missions, use task and plan
 
 To Add a Memory:
@@ -180,21 +196,14 @@ data:
   type: "View"
   name: "Name of the memory file you want to view"
 
-11. Fetch
-Fetch a web page
+12. ScratchPad
+Temperarily write down thoughts, useful for reasoning. The content in ScratchPad is not saved between different sessions. The ScratchPad is not shown to the user
 
-type: "Fetch"
+type: "ScratchPad"
 data:
-  url: "the url you want to fetch"
-  method: "GET or POST or PATCH or"
-  headers:
-    User-Agent: "Operon/0.1"
-  params:
-    ...
-  body:
-    ...
-  body: null
-  timeout: 10
+  append: "The text you want to append. If you just want to view current content, leave this as an empty string"
+
+The return value will be the whole content of the ScratchPad
 
 </output_format>
 

@@ -34,11 +34,14 @@ def is_text_response(content_type: str) -> bool:
 class ToolServer:
     def __init__(self):
         self.tasks = json.loads(open(srcPath / "task.json").read())
+        self.scratchPad = ""
     def __call__(self, value):
-        if value["type"] == "Calculator":
+        if value["type"] == "Python":
+            result = {}
+            exec(value["data"]["code"], {}, result)
             return yaml.dump({
                 "type": "Result",
-                "data": eval(value["data"])
+                "data": result[value["result"]]
             })
         elif value["type"] == "ReadFile":
             res = value["data"]
@@ -65,6 +68,16 @@ class ToolServer:
             res = value["data"]
             name, content, typ = res["name"], res["content"], res["type"]
             print(rootPath / name.lstrip("/\\"))
+            if not (rootPath / name.lstrip("/\\")).exists():
+                return yaml.dump({
+                    "type": "Error",
+                    "data": f"File {name} doesn't exist"
+                })
+            if not (rootPath / name.lstrip("/\\")).is_file():
+                return yaml.dump({
+                    "type": "Error",
+                    "data": f"{name} is not a file"
+                })
             open(rootPath / name.lstrip("/\\"), typ).write(content)
             return yaml.dump({
                 "type": "Result",
@@ -168,6 +181,13 @@ class ToolServer:
                         "type": "Result",
                         "data": open(srcPath.parent / "memory" / name, "r").read()
                     })
+        elif value["type"] == "ScratchPad":
+            append = value["data"]["append"]
+            self.scratchPad += append
+            return yaml.dump({
+                "type": "Result",
+                "data": self.scratchPad
+            })
         elif value["type"] == "Fetch":
             try:
                 data = value["data"]
@@ -184,7 +204,6 @@ class ToolServer:
                 result = {
                     "type": "Result",
                     "data": {
-                        "ok": True,
                         "response": {
                             "status_code": response.status_code,
                             "reason": response.reason,
@@ -206,26 +225,24 @@ class ToolServer:
 
                 return yaml.dump(result)
             except requests.Timeout:
-                return {
-                    "type": "Result",
+                return yaml.dump({
+                    "type": "Error",
                     "data": {
-                        "ok": False,
                         "error": {
                             "type": "Timeout",
                             "message": "Request timed out",
                         }
                     }
-                }
+                })
             except requests.RequestException as e:
-                return {
-                    "type": "Result",
+                return yaml.dump({
+                    "type": "Error",
                     "data": {
-                        "ok": False,
                         "error": {
                             "type": type(e).__name__,
                             "message": str(e),
                         }
                     }
-                }
+                })
 
 toolServer = ToolServer()

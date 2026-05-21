@@ -16,7 +16,7 @@ if __name__ == "__main__":
         print("invalid session name, please re-enter")
     print("OK, session loaded")
     history = sessions[session] if session != "" else {}
-    print(session, "\n", history)
+    # print(session, "\n", history)
     llm = operon.defaultLLM
     if session != "": llm.setMessages(history)
     server = operon.toolServer
@@ -52,5 +52,5 @@ if __name__ == "__main__":
         sessions[sessionName] = llm.messages
     else:
         sessions[session] = llm.messages
-    json.dump(open(srcPath / "operon" / "session.js"), sessions)
+    json.dump(sessions, open(srcPath / "operon" / "session.js"))
     
