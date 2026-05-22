@@ -1,0 +1,8 @@
+Python:
+Run a piece of Python code, designed for quick calculation and fact checking
+format of such tool call:
+
+type: "Python"
+data:
+  code: "code to execute"
+  result: "a variable name, its value will be returned to you

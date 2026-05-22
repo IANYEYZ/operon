@@ -1,0 +1,9 @@
+ReadFile:
+Read a file from file system, note that the path should ALWAYS start at the root of virtual file system
+format of such tool call:
+
+type: "ReadFile"
+data:
+  name: "file name to read from"
+  start: "a number, indicating the start line to read, leave null to read from start"
+  end: "a number, indicating the end line to read, leave null to read to end; note that the end line will not be read, thus it's a segment [start, end)"

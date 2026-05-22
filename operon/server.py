@@ -8,6 +8,7 @@ from pathlib import Path
 import json
 import requests
 import base64
+from bs4 import BeautifulSoup
 
 rootPath = Path(__file__).parent.parent / "file"
 srcPath = Path(__file__).parent
@@ -244,5 +245,37 @@ class ToolServer:
                         }
                     }
                 })
+        elif value["type"] == "SearchEngine":
+            query, maxResults = value["data"]["query"], value["data"]["max_results"]
+            url = "https://html.duckduckgo.com/html/"
+            params = {"q": query}
+            headers = {"User-Agent": "OperonAgent/0.1"}
+            resp = requests.post(url, data=params, headers=headers)
+            if resp.status_code != 200:
+                return {"ok": False, "error": f"HTTP {resp.status_code}"}
+
+            soup = BeautifulSoup(resp.text, "html.parser")
+            results = []
+
+            for a in soup.select("a.result__a")[:maxResults]:
+                title = a.get_text()
+                link = a['href']
+                # DuckDuckGo sometimes wraps URL in redirects: /l/?kh=-1&uddg=URL
+                if 'uddg=' in link:
+                    import urllib.parse
+                    link = urllib.parse.unquote(link.split('uddg=')[1])
+                snippet_tag = a.find_parent("div", class_="result")
+                snippet = snippet_tag.select_one("a.result__snippet")
+                snippet_text = snippet.get_text() if snippet else ""
+                results.append({
+                    "title": title,
+                    "snippet": snippet_text,
+                    "url": link
+                })
+
+            return yaml.dump({
+                "type": "Result",
+                "data": results
+            })
 
 toolServer = ToolServer()

@@ -1,0 +1,7 @@
+SearchEngine
+Search the web for websites, using duckduckgo search search engine
+
+type: "SearchEngine"
+data:
+  query: "what you want to search"
+  max_results: 5

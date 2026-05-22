@@ -1,0 +1,8 @@
+ScratchPad
+Temperarily write down thoughts, useful for reasoning. The content in ScratchPad is not saved between different sessions. The ScratchPad is not shown to the user
+
+type: "ScratchPad"
+data:
+  append: "The text you want to append. If you just want to view current content, leave this as an empty string"
+
+The return value will be the whole content of the ScratchPad
