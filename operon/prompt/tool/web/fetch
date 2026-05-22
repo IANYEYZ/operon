@@ -1,0 +1,15 @@
+Fetch
+Fetch a web page
+
+type: "Fetch"
+data:
+  url: "the url you want to fetch"
+  method: "GET or POST or PATCH"
+  headers:
+    User-Agent: "Operon/0.1"
+  params:
+    ...
+  body:
+    ...
+  body: null
+  timeout: 10

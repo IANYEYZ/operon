@@ -1,0 +1,30 @@
+Task:
+Add a task, tick a task or view tasks from local memory. To add a task:
+
+type: "Task"
+data:
+  type: "Add"
+  name: "name of task here"
+  content: "content of task here"
+
+To view all tasks(in time order):
+
+type: "Task"
+data:
+  type: "View"
+
+the result of this will be in the following format:
+
+type: "Result"
+data:
+  task1:
+    name: name of task1
+    content: content of task1
+  ...
+
+To tick a task(i.e. mark it as done and delete it):
+
+type: "Task"
+data:
+  type: "Tick"
+  name: "name of the task you wanna tick here"

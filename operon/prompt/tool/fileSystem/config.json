@@ -1,0 +1,14 @@
+{
+    "readFile": {
+        "fileName": "readFile"
+    },
+    "writeFile": {
+        "fileName": "writeFile"
+    },
+    "mkdir": {
+        "fileName": "mkdir"
+    },
+    "ls": {
+        "fileName": "ls"
+    }
+}

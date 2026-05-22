@@ -1,0 +1,8 @@
+Mkdir:
+Create a new directory
+format of such tool call:
+
+type: "Mkdir"
+data: "path of the new directory"
+
+The response for this call will be a type none result

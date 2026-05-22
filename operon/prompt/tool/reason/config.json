@@ -1,0 +1,14 @@
+{
+    "task": {
+        "fileName": "task"
+    },
+    "plan": {
+        "fileName": "plan"
+    },
+    "memory": {
+        "fileName": "memory"
+    },
+    "scratchPad": {
+        "fileName": "scratchPad"
+    }
+}

@@ -7,7 +7,7 @@ import yaml
 import os
 from dotenv import load_dotenv
 
-from . import loadPrompt
+from . import loadSystemPrompt
 
 load_dotenv()
 
@@ -20,7 +20,7 @@ class LLM:
         self.client = OpenAI(api_key=apikey, base_url=url)
         self.model = model
         self.messages = [
-            SYSTEM(loadPrompt("SYSTEM"))
+            SYSTEM(loadSystemPrompt())
         ]
     def setMessages(self, messages):
         self.messages = messages

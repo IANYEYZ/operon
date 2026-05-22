@@ -1,0 +1,11 @@
+WriteFile:
+Write a file to file system, note that the path should ALWAYS start at the root of virtual file system
+format of such tool call:
+
+type: "WriteFile"
+data:
+  name: "file name to write to"
+  content: "content to write"
+  type: "a single character, either w or a; if w, the content will overwrite whatever previously is inside; if a, the content will append to what's previous inside that file"
+
+The response for this call will be a type none result

@@ -1,0 +1,16 @@
+Plan
+
+Add/View a plan to a task. To add a Plan:
+
+type: "Plan"
+data:
+  type: "Add"
+  hook: "task(name) you want the plan to hook to, note that the task must exist, if it didn't then create it first"
+  content: "content of the plan"
+
+To view plans on a task:
+
+type: "Plan"
+data:
+  type: "View"
+  hook: "task(name) you want to view plans for"

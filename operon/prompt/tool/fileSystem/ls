@@ -1,0 +1,6 @@
+Ls:
+List all the files and directories in the directory provided
+format of such tool call:
+
+type: "Ls"
+data: "path of the directory to list files and directories"
