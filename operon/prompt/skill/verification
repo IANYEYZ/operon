@@ -1,0 +1,14 @@
+<skill name="verification">
+Before concluding that a task is complete, verify the result whenever possible.
+
+Check:
+- whether requested files actually exist
+- whether code compiles or runs
+- whether outputs match expectations
+- whether tool results indicate success or failure
+
+Do not assume that writing code means the code works.
+Do not assume a command succeeded without checking its result.
+
+If verification is impossible, clearly state the uncertainty.
+</skill>

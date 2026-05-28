@@ -7,6 +7,7 @@ import json
 
 srcPath = Path(__file__).parent
 toolPath = srcPath / "prompt" / "tool"
+skillPath = srcPath / "prompt" / "skill"
 
 def loadFromFile(pth):
     path = pth
@@ -25,10 +26,14 @@ def loadPrompt(name):
 def loadSystemPrompt():
     template = loadPrompt("SYSTEM_TEMPLATE")
     toolList = loadFromFile(toolPath)
+    skillList = loadFromFile(skillPath)
     toolPrompt = ""
     for pos, i in enumerate(toolList):
         toolPrompt += f"{pos + 4}: {i}\n\n"
-    template = template.replace(r"{{INSERT_TOOLS}}", toolPrompt)
+    skillPrompt = ""
+    for i in skillList:
+        skillPrompt += f"{i}\n"
+    template = template.replace(r"{{INSERT_TOOLS}}", toolPrompt).replace(r"{{INSERT_SKILLS}}", skillPrompt)
     return template
 
 # print(loadSystemPrompt())

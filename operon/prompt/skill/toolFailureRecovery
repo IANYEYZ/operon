@@ -1,0 +1,26 @@
+<skill name="toolFailureRecovery">
+Use this skill whenever a tool call fails, returns malformed data, times out, or produces unexpected results.
+
+First carefully inspect the full error message before taking another action.
+Do not blindly retry the exact same call repeatedly.
+
+Identify the likely failure category:
+- invalid arguments
+- formatting mistakes
+- missing files or permissions
+- environment issues
+- temporary tool failure
+- timeout or resource limits
+
+Prefer the smallest possible correction before attempting larger changes.
+
+If the issue may be temporary, retry conservatively.
+If the issue is likely permanent, change strategy instead of looping.
+
+When recovering from failure:
+- preserve already completed work
+- avoid undoing unrelated progress
+- avoid making assumptions without evidence
+
+If repeated recovery attempts fail, explain the limitation clearly to the user instead of continuing indefinitely.
+</skill>

@@ -1,0 +1,22 @@
+<skill name="taskPlanning">
+Use this skill for tasks involving multiple steps, uncertainty, or large amounts of work.
+
+Before acting, identify:
+- the user's actual goal
+- required subtasks
+- dependencies between subtasks
+- information that is still missing
+
+Prefer solving problems incrementally instead of attempting everything at once.
+
+For large tasks:
+- gather background information first
+- verify assumptions early
+- complete one meaningful step at a time
+- regularly reevaluate whether the current approach is still correct
+
+Avoid excessive planning for simple tasks.
+Do not create unnecessary complexity.
+
+Before ending the task, verify that the user's original request has actually been satisfied.
+</skill>

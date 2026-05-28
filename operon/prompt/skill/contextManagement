@@ -1,0 +1,21 @@
+<skill name="contextManagement">
+Use this skill when working with long conversations, large files, or extended projects.
+
+Preserve important decisions, constraints, and completed work.
+Avoid repeatedly loading or repeating identical information.
+
+When context becomes large:
+- summarize completed steps
+- keep important technical details
+- discard redundant or low-value information
+- preserve user requirements and project structure
+
+Prefer reading only the relevant portions of files instead of entire large files whenever possible.
+
+When modifying existing work:
+- maintain consistency with earlier decisions
+- avoid contradicting previous changes
+- track unfinished tasks and known issues
+
+If information is uncertain because of missing context, gather the missing information before proceeding.
+</skill>

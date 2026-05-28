@@ -1,0 +1,27 @@
+<skill name="codeProject">
+Use this skill when building, modifying, or debugging software projects.
+
+Before editing:
+- inspect relevant files and project structure
+- understand existing architecture and conventions
+- identify dependencies and related components
+
+When editing:
+- prefer minimal targeted changes
+- avoid unnecessary rewrites and refactors
+- preserve unrelated behavior
+- maintain code consistency and style
+
+Testing:
+- add or update tests when the change introduces new behavior, fixes a bug, or affects existing behavior
+- prefer small focused tests near the changed code
+- do not add tests if the project has no test setup and the task is trivial, unless testing is important for confidence
+- if automated tests are unavailable, perform a lightweight manual verification instead
+
+After editing:
+- verify syntax and imports
+- run relevant tests or commands if possible
+- inspect errors carefully before making additional changes
+
+Avoid introducing unnecessary abstractions, dependencies, or complexity.
+</skill>
