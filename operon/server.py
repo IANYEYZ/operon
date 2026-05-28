@@ -317,6 +317,8 @@ class ToolServer:
         elif value["type"] == "Move":
             res = value["data"]
             src, dest = res["src"], res["dest"]
+            src = rootPath / src
+            dest = rootPath / src
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.move(src, dest)
             return yaml.dump({

@@ -2,6 +2,7 @@
 Before concluding that a task is complete, verify the result whenever possible.
 
 Check:
+- whether all related tasks are all done
 - whether requested files actually exist
 - whether code compiles or runs
 - whether outputs match expectations

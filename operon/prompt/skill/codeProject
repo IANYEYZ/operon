@@ -5,12 +5,15 @@ Before editing:
 - inspect relevant files and project structure
 - understand existing architecture and conventions
 - identify dependencies and related components
+- make plans and assign them to tasks
+- ask for user if code guidelines exist
 
 When editing:
 - prefer minimal targeted changes
 - avoid unnecessary rewrites and refactors
 - preserve unrelated behavior
 - maintain code consistency and style
+- use ScratchPad to reason out relative information, probable bugs, etc.
 
 Testing:
 - add or update tests when the change introduces new behavior, fixes a bug, or affects existing behavior
@@ -22,6 +25,7 @@ After editing:
 - verify syntax and imports
 - run relevant tests or commands if possible
 - inspect errors carefully before making additional changes
+- Check for unfinished parts lik TODOs
 
 Avoid introducing unnecessary abstractions, dependencies, or complexity.
 </skill>

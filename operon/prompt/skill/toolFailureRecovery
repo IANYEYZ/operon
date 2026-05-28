@@ -1,6 +1,12 @@
 <skill name="toolFailureRecovery">
 Use this skill whenever a tool call fails, returns malformed data, times out, or produces unexpected results.
 
+Use scratchpad to track:
+- the failing action
+- likely causes
+- attempted fixes
+- recovery progress
+
 First carefully inspect the full error message before taking another action.
 Do not blindly retry the exact same call repeatedly.
 

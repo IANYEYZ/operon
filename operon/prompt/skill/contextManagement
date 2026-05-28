@@ -10,7 +10,7 @@ When context becomes large:
 - discard redundant or low-value information
 - preserve user requirements and project structure
 
-Prefer reading only the relevant portions of files instead of entire large files whenever possible.
+Prefer reading or editing only the relevant portions of files instead of entire large files whenever possible.
 
 When modifying existing work:
 - maintain consistency with earlier decisions
