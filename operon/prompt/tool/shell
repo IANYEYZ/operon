@@ -5,4 +5,4 @@ Note that change on cwd or env vairables won't be saved across multiple Shell ru
 type: "Shell"
 data:
   command: "Shell command to run"
-  cwd: "Current working directory of this specific shell run"
+  cwd: "Current working directory of this specific shell run, note that this is not optional"
