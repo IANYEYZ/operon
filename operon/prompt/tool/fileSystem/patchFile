@@ -1,5 +1,8 @@
 patchFile:
-edit a section of a file(i.e. change all [start, end) lines to a new content, zero index)
+edit a section of a file(i.e. change all [start, end) lines to a new content, zero-indexed)
+The exact thing happening:
+every line(say it's the i-th line, zero-indexed), if start <= i < end, it'll be deleted
+then, content will be inserted before the start-th line(the start-th line now is the end-th line originally)
 
 type: "PatchFile"
 data:

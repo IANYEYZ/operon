@@ -50,11 +50,19 @@ class ToolServer:
                 os.chdir(rootPath)
                 with contextlib.redirect_stdout(buffer):
                     exec(value["data"]["code"])
+            except Exception as e:
+                return yaml.dump({
+                    "type": "Error",
+                    "data": "The python code failed to run or raised an Exception"
+                })
             finally:
                 os.chdir(curCwd)
             return yaml.dump({
                 "type": "Result",
-                "data": repr(buffer.getvalue())
+                "data": {
+                    "fromTool": "Python",
+                    "value": repr(buffer.getvalue())
+                }
             })
         elif value["type"] == "Shell":
             res = value["data"]
@@ -85,6 +93,7 @@ class ToolServer:
                 return yaml.dump({
                     "type": "Result",
                     "data": {
+                        "fromTool": "Shell",
                         "returncode": completed.returncode,
                         "stdout": completed.stdout,
                         "stderr": completed.stderr,
@@ -120,10 +129,30 @@ class ToolServer:
             if end is None: end = len(lines)
             return yaml.dump({
                 "type": "Result",
-                "data": '\n'.join(lines[start:end])
+                "data": {
+                    "fromTool": "ReadFile",
+                    "content": '\n'.join(lines[start:end]),
+                    "start": start,
+                    "end": end
+                }
             })
         elif value["type"] == "WriteFile":
             res = value["data"]
+            if res.get("name", None) == None:
+                return yaml.dump({
+                    "type": "Error",
+                    "data": "parameter `name` is missing from this WriteFile tool call"
+                })
+            if res.get("content", None) == None:
+                return yaml.dump({
+                    "type": "Error",
+                    "data": "parameter `content` is missing from this WriteFile tool call"
+                })
+            if res.get("type", None) == None:
+                return yaml.dump({
+                    "type": "Error",
+                    "data": "parameter `type` is missing from this WriteFile tool call"
+                })
             name, content, typ = res["name"], res["content"], res["type"]
             print(rootPath / name.lstrip("/\\"))
             (rootPath / name.lstrip("/\\")).parent.mkdir(parents=True, exist_ok=True)
@@ -278,6 +307,7 @@ class ToolServer:
                             return yaml.dump({
                                 "type": "Result",
                                 "data": {
+                                    "fromTool": "SearchInFiles",
                                     "truncated": truncated,
                                     "matches": matches,
                                 }
@@ -285,6 +315,7 @@ class ToolServer:
             return yaml.dump({
                 "type": "Result",
                 "data": {
+                    "fromTool": "SearchInFiles",
                     "truncated": truncated,
                     "matches": matches,
                 }
@@ -312,7 +343,10 @@ class ToolServer:
             path = rootPath / res.lstrip("/\\")
             return yaml.dump({
                 "type": "Result",
-                "data": [p.name for p in Path(path).iterdir()]
+                "data": {
+                    "fromTool": "Ls",
+                    "value": [p.name for p in Path(path).iterdir()]
+                }
             })
         elif value["type"] == "Move":
             res = value["data"]
@@ -339,7 +373,10 @@ class ToolServer:
                     data["task" + str(p)] = self.tasks[i]["content"]
                 return yaml.dump({
                     "type": "Result",
-                    "data": data
+                    "data": {
+                        "fromTool": "Task",
+                        "value": data
+                    }
                 })
             elif res["type"] == "Tick":
                 if not res["name"] in self.tasks.keys():
@@ -369,24 +406,34 @@ class ToolServer:
                 if not res["hook"] in self.tasks.keys():
                     return yaml.dump({
                         "type": "Error",
-                        "data": "The task the plan want to hook to didn't exist; Check for typo or create it"
+                        "data": "The task that the plan want to hook to didn't exist; Check for typo or create it"
                     })
                 data = self.tasks[res["hook"]]["plan"]
                 return yaml.dump({
                     "type": "Result",
-                    "data": data
+                    "data": {
+                        "fromTool": "Plan",
+                        "value": data
+                    }
                 })
         elif value["type"] == "Memory":
             res = value["data"]
             if res["type"] == "Add":
                 name, content = res["name"], res["content"]
                 open(srcPath.parent / "memory" / name, "w").write(content)
+                return yaml.dump({
+                    "type": "Result",
+                    "data": None
+                })
             elif res["type"] == "View":
                 name = res["name"]
                 if name == None:
                     return yaml.dump({
                         "type": "Result",
-                        "data": [p.name for p in Path(srcPath.parent / "memory").iterdir()]
+                        "data": {
+                            "fromTool": "Memory",
+                            "value": [p.name for p in Path(srcPath.parent / "memory").iterdir()]
+                        }
                     })
                 else:
                     if not (srcPath.parent / "memory" / name).exists():
@@ -396,14 +443,20 @@ class ToolServer:
                         })
                     return yaml.dump({
                         "type": "Result",
-                        "data": open(srcPath.parent / "memory" / name, "r").read()
+                        "data": {
+                            "fromTool": "Memory",
+                            "value": open(srcPath.parent / "memory" / name, "r").read()
+                        }
                     })
         elif value["type"] == "ScratchPad":
             append = value["data"]["append"]
             self.scratchPad += append
             return yaml.dump({
                 "type": "Result",
-                "data": self.scratchPad
+                "data": {
+                    "fromTool": "ScratchPad",
+                    "value": self.scratchPad
+                }
             })
         elif value["type"] == "Fetch":
             try:
@@ -422,6 +475,7 @@ class ToolServer:
                     "type": "Result",
                     "data": {
                         "response": {
+                            "fromTool": "Fetch",
                             "status_code": response.status_code,
                             "reason": response.reason,
                             "url": response.url,
@@ -543,6 +597,7 @@ class ToolServer:
                 return yaml.dump({
                     "type": "Result",
                     "data": {
+                        "fromTool": "SearchEngine",
                         "query": query,
                         "count": len(results),
                         "results": results
