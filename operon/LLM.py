@@ -43,13 +43,19 @@ class LLM:
                     print("Parsed LLM Response: ", yaml.safe_load(res))
                     return yaml.safe_load(res)
                 except:
+                    print("Format Error:")
+                    print(res)
                     return {
                         "type": "Error",
-                        "data": """Yaml Error because of incorrect format, please try again
-Here's an example of valid Yaml
+                        "data": """Format Error because of incorrect format, please try again
+Possible format errors:
+1. double quote not covering the whole string
+for example, the following is not valid
 type: "Print"
-data: "This is an example of Print tool, to print messages to user"
-"""
+data: "Hello there" This is a test
+because the double quote incorrectly stopped early
+It's also recommended that, for multi-line string, use the | grammar in yaml
+2. more than one tool calls being put together. Seperate them into multiple calls, first call the first one, then call the second one, etc."""
                     }
             except Exception as e:
                 last_err = e
