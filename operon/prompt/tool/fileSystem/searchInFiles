@@ -1,5 +1,6 @@
 SearchInFiles:
 search for text or regex patterns inside files under a directory(similar to grep)
+The path should always be relative path, i.e. it should always start with ./
 
 Binary files and very large files may be automatically skipped
 

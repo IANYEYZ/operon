@@ -27,8 +27,6 @@ TEXT_TYPES = (
     "application/javascript",
     "application/xml",
 )
-
-
 def is_text_response(content_type: str) -> bool:
     if not content_type:
         return False
@@ -127,6 +125,11 @@ class ToolServer:
             lines = content.splitlines(keepends=True)
             if start is None: start = 0
             if end is None: end = len(lines)
+            if start < 0 or end < start:
+                return yaml.dump({
+                    "type": "Error",
+                    "data": f"Invalid range [{start}, {end})"
+                })
             return yaml.dump({
                 "type": "Result",
                 "data": {
@@ -350,15 +353,82 @@ class ToolServer:
             })
         elif value["type"] == "Move":
             res = value["data"]
-            src, dest = res["src"], res["dest"]
-            src = rootPath / src
-            dest = rootPath / src
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.move(src, dest)
-            return yaml.dump({
-                "type": "Result",
-                "data": None
-            })
+            src = res["src"]
+            dest = res["dest"]
+            root = rootPath.resolve()
+            if not isinstance(src, str) or not src.strip():
+                return yaml.dump({
+                    "type": "Error",
+                    "data": "src must be a non-empty string"
+                })
+            if not isinstance(dest, str) or not dest.strip():
+                return yaml.dump({
+                    "type": "Error",
+                    "data": "dest must be a non-empty string"
+                })
+            src_path = (root / src.lstrip("/\\")).resolve()
+            dest_path = (root / dest.lstrip("/\\")).resolve()
+            try:
+                src_path.relative_to(root)
+            except ValueError:
+                return yaml.dump({
+                    "type": "Error",
+                    "data": "Source path escapes rootPath"
+                })
+            try:
+                dest_path.relative_to(root)
+            except ValueError:
+                return yaml.dump({
+                    "type": "Error",
+                    "data": "Destination path escapes rootPath"
+                })
+            if src_path == root:
+                return yaml.dump({
+                    "type": "Error",
+                    "data": "Cannot move rootPath"
+                })
+            if src_path == dest_path:
+                return yaml.dump({
+                    "type": "Error",
+                    "data": "Source and destination are the same"
+                })
+            if not src_path.exists():
+                return yaml.dump({
+                    "type": "Error",
+                    "data": f"Source {src} does not exist"
+                })
+            if dest_path.exists():
+                return yaml.dump({
+                    "type": "Error",
+                    "data": f"Destination {dest} already exists"
+                })
+            if src_path.is_dir():
+                try:
+                    dest_path.relative_to(src_path)
+                    return yaml.dump({
+                        "type": "Error",
+                        "data": "Cannot move a directory into itself"
+                    })
+                except ValueError:
+                    pass
+            try:
+                dest_path.parent.mkdir(
+                    parents=True,
+                    exist_ok=True
+                )
+                shutil.move(
+                    str(src_path),
+                    str(dest_path)
+                )
+                return yaml.dump({
+                    "type": "Result",
+                    "data": None
+                })
+            except Exception as e:
+                return yaml.dump({
+                    "type": "Error",
+                    "data": str(e)
+                })
         elif value["type"] == "Task":
             res = value["data"]
             if res["type"] == "Add":
@@ -389,6 +459,11 @@ class ToolServer:
                     "type": "Result",
                     "data": None
                 })
+            else:
+                return yaml.dump({
+                    "type": "Error",
+                    "data": "Unknown `type` for task tool, it's either wrong or not exist"
+                })
         elif value["type"] == "Plan":
             res = value["data"]
             if res["type"] == "Add":
@@ -415,6 +490,11 @@ class ToolServer:
                         "fromTool": "Plan",
                         "value": data
                     }
+                })
+            else:
+                return yaml.dump({
+                    "type": "Error",
+                    "data": "Unknown `type` for plan tool, it's either wrong or not exist"
                 })
         elif value["type"] == "Memory":
             res = value["data"]
@@ -448,6 +528,11 @@ class ToolServer:
                             "value": open(srcPath.parent / "memory" / name, "r").read()
                         }
                     })
+            else:
+                return yaml.dump({
+                    "type": "Error",
+                    "data": "Unknown `type` for memory tool, it's either wrong or not exist"
+                })
         elif value["type"] == "ScratchPad":
             append = value["data"]["append"]
             self.scratchPad += append
@@ -613,5 +698,10 @@ class ToolServer:
                     "type": "Error",
                     "data": str(e)
                 })
+        else:
+            return yaml.dump({
+                "type": "Error",
+                "value": "Unknown tool call, did you miss spelled or accidently write the wrong call?"
+            })
 
 toolServer = ToolServer()

@@ -50,12 +50,23 @@ class LLM:
                         "data": """Format Error because of incorrect format, please try again
 Possible format errors:
 1. double quote not covering the whole string
-for example, the following is not valid
+for example, the following is NOT valid
 type: "Print"
 data: "Hello there" This is a test
 because the double quote incorrectly stopped early
 It's also recommended that, for multi-line string, use the | grammar in yaml
-2. more than one tool calls being put together. Seperate them into multiple calls, first call the first one, then call the second one, etc."""
+2. more than one tool calls being put together. Seperate them into multiple calls, first call the first one, then call the second one, etc.
+3. there's extra text around the yaml. For example, the following is NOT valid
+
+Mnnn, let me think
+type: "Print"
+data: "OK, I found the solution"
+4. a format different of yaml is used. For example, the following is NOT valid
+<print>
+OK, let's make this
+</print>
+In short, your output need to be correct yaml, with nothing else before or after, for one and only one tool call
+Note that this errored message won't be displayed to user, find the format issue, and manually redo what you want to do"""
                     }
             except Exception as e:
                 last_err = e

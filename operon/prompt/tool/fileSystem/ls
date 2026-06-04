@@ -1,5 +1,6 @@
 Ls:
 List all the files and directories in the directory provided
+The path should always be relative path, i.e. it should always start with ./
 format of such tool call:
 
 type: "Ls"
