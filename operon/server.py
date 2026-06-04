@@ -534,7 +534,12 @@ class ToolServer:
                     "data": "Unknown `type` for memory tool, it's either wrong or not exist"
                 })
         elif value["type"] == "ScratchPad":
-            append = value["data"]["append"]
+            append = value["data"]
+            if not isinstance(append, str):
+                return yaml.dump({
+                    "type": "Error",
+                    "data": "The data entry of ScratchPad must be a string"
+                })
             self.scratchPad += append
             return yaml.dump({
                 "type": "Result",

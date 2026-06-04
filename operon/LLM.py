@@ -41,7 +41,10 @@ class LLM:
                     self.messages.append(ASSISTANT(res))
                 try:
                     print("Parsed LLM Response: ", yaml.safe_load(res))
-                    return yaml.safe_load(res)
+                    if isinstance(yaml.safe_load(res), dict):
+                        return yaml.safe_load(res)
+                    else:
+                        raise Exception("")
                 except:
                     print("Format Error:")
                     print(res)
