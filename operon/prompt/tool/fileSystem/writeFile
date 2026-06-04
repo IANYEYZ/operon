@@ -1,5 +1,6 @@
 WriteFile:
 Write a file to file system, note that the path should ALWAYS start at the root of virtual file system
+The path should always be relative path, i.e. it should always start with ./
 format of such tool call:
 
 type: "WriteFile"

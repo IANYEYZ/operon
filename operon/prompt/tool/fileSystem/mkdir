@@ -1,5 +1,6 @@
 Mkdir:
 Create a new directory
+The path should always be relative path, i.e. it should always start with ./
 format of such tool call:
 
 type: "Mkdir"
