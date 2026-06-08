@@ -52,18 +52,18 @@ class LLM:
                         "type": "Error",
                         "data": """Format Error because of incorrect format, please try again
 Possible format errors:
-1. double quote not covering the whole string
+1. there's extra text around the yaml. Stop putting text(even apologize) before yaml, and the issue will be solved. For example, the following is NOT valid, because of the "Mnnn, let me think" before the yaml
+
+Mnnn, let me think
+type: "Print"
+data: "OK, I found the solution"
+2. double quote or single quote not covering the whole string
 for example, the following is NOT valid
 type: "Print"
 data: "Hello there" This is a test
 because the double quote incorrectly stopped early
 It's also recommended that, for multi-line string, use the | grammar in yaml
-2. more than one tool calls being put together. Seperate them into multiple calls, first call the first one, then call the second one, etc.
-3. there's extra text around the yaml. For example, the following is NOT valid
-
-Mnnn, let me think
-type: "Print"
-data: "OK, I found the solution"
+3. more than one tool calls being put together. Seperate them into multiple calls, first call the first one, then call the second one, etc.
 4. a format different of yaml is used. For example, the following is NOT valid
 <print>
 OK, let's make this
