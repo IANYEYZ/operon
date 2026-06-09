@@ -7,6 +7,7 @@ import yaml
 import os
 from dotenv import load_dotenv
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 from . import loadSystemPrompt
 
@@ -15,6 +16,9 @@ load_dotenv()
 def SYSTEM(message: str = ""): return {"role": "system", "content": message}
 def USER(message: str = ""): return {"role": "user", "content": message}
 def ASSISTANT(message: str = ""): return {"role": "assistant", "content": message}
+
+branchesPool = ThreadPoolExecutor()
+branches = {}
 
 class LLM:
     def __init__(self, apikey: str, model: str, url: str = "https://api.deepseek.com"):
@@ -57,6 +61,13 @@ Possible format errors:
 Mnnn, let me think
 type: "Print"
 data: "OK, I found the solution"
+
+Delete the Mnnn, let me think, and only output
+
+type: "Print"
+data: "OK, I found the solution"
+
+Will fix the issue
 2. double quote or single quote not covering the whole string
 for example, the following is NOT valid
 type: "Print"

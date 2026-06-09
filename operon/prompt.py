@@ -36,4 +36,17 @@ def loadSystemPrompt():
     template = template.replace(r"{{INSERT_TOOLS}}", toolPrompt).replace(r"{{INSERT_SKILLS}}", skillPrompt)
     return template
 
+def loadBranchSystemPrompt():
+    template = loadPrompt("BRANCH_SYSTEM_TEMPLATE")
+    toolList = loadFromFile(toolPath)
+    skillList = loadFromFile(skillPath)
+    toolPrompt = ""
+    for pos, i in enumerate(toolList):
+        toolPrompt += f"{pos + 3}: {i}\n\n"
+    skillPrompt = ""
+    for i in skillList:
+        skillPrompt += f"{i}\n"
+    template = template.replace(r"{{INSERT_TOOLS}}", toolPrompt).replace(r"{{INSERT_SKILLS}}", skillPrompt)
+    return template
+
 # print(loadSystemPrompt())
