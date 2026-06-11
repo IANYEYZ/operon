@@ -7,7 +7,6 @@ import yaml
 import os
 from dotenv import load_dotenv
 import time
-from concurrent.futures import ThreadPoolExecutor
 
 from . import loadSystemPrompt
 
@@ -17,16 +16,14 @@ def SYSTEM(message: str = ""): return {"role": "system", "content": message}
 def USER(message: str = ""): return {"role": "user", "content": message}
 def ASSISTANT(message: str = ""): return {"role": "assistant", "content": message}
 
-branchesPool = ThreadPoolExecutor()
-branches = {}
-
 class LLM:
-    def __init__(self, apikey: str, model: str, url: str = "https://api.deepseek.com"):
+    def __init__(self, apikey: str, model: str, systemPrompt = loadSystemPrompt(), gId = 0, url: str = "https://api.deepseek.com"):
         self.client = OpenAI(api_key=apikey, base_url=url)
         self.model = model
         self.messages = [
-            SYSTEM(loadSystemPrompt())
+            SYSTEM(systemPrompt)
         ]
+        self.gId = gId
     def setMessages(self, messages):
         self.messages = messages
     def __call__(self, userMessage = None, saveMessage: bool = True):
@@ -44,7 +41,7 @@ class LLM:
                 if saveMessage:
                     self.messages.append(ASSISTANT(res))
                 try:
-                    print("Parsed LLM Response: ", yaml.safe_load(res))
+                    print(f"Parsed LLM Response from {self.gId}: ", yaml.safe_load(res))
                     if isinstance(yaml.safe_load(res), dict):
                         return yaml.safe_load(res)
                     else:
@@ -84,7 +81,7 @@ Note that this errored message won't be displayed to user, find the format issue
                     }
             except Exception as e:
                 last_err = e
-                print(f"SYSTEM: LLM call failed, attempt {attempt + 1}/3: {e}")
+                print(f"SYSTEM: LLM {self.gId} call failed, attempt {attempt + 1}/3: {e}")
                 if attempt < 2:
                     time.sleep(1)
 

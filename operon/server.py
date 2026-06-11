@@ -17,6 +17,7 @@ import contextlib
 import re
 import os
 import urllib.parse
+import time
 
 rootPath = Path(__file__).parent.parent / "file"
 srcPath = Path(__file__).parent
@@ -62,6 +63,20 @@ class ToolServer:
                     "value": repr(buffer.getvalue())
                 }
             })
+        elif value["type"] == "Branch":
+            from .branches import addBranch, branches
+            if value["data"]["type"] == "Create":
+                addBranch(value["data"]["goal"])
+                return yaml.dump({
+                    "type": "Result",
+                    "data": None
+                })
+            else:
+                print(branches)
+                return yaml.dump({
+                    "type": "Result",
+                    "data": branches
+                })
         elif value["type"] == "Shell":
             res = value["data"]
             command = res["command"]
@@ -108,6 +123,22 @@ class ToolServer:
                     "type": "Error",
                     "data": str(e)
                 })
+        elif value["type"] == "Sleep":
+            duration = value["data"]
+            try:
+                duration = float(duration)
+                if duration < 0:
+                    raise ValueError("Duration must be non-negative")
+            except ValueError:
+                return yaml.dump({
+                    "type": "Error",
+                    "data": "`duration` must be a non-negative number"
+                })
+            time.sleep(duration / 1000.0)
+            return yaml.dump({
+                "type": "Result",
+                "data": None
+            })
         elif value["type"] == "ReadFile":
             res = value["data"]
             name, start, end = res["name"], res.get("start", None), res.get("end", None)

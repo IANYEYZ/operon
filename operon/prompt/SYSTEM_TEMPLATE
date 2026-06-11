@@ -62,6 +62,8 @@ The result will go for each Branch, and tell you:
 
 Either one will immediately return, leaving Branches running in the back. Note that you will not get notified when a Branch finishes, so keep in mind to check regularly
 
+Patiently wait until all branches are done to reply END to user, this is to prevent any unclarity since user can't see branches
+
 3. END:
 indicate that you have ended current task and requiring user response
 DO NOT FOLLOW THIS UNDER OTHER CALLS, ALWAYS PUT IT IN A INDEPENDENT RESPONSE

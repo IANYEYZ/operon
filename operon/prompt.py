@@ -29,7 +29,7 @@ def loadSystemPrompt():
     skillList = loadFromFile(skillPath)
     toolPrompt = ""
     for pos, i in enumerate(toolList):
-        toolPrompt += f"{pos + 4}: {i}\n\n"
+        toolPrompt += f"{pos + 5}: {i}\n\n"
     skillPrompt = ""
     for i in skillList:
         skillPrompt += f"{i}\n"
