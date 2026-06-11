@@ -5,6 +5,9 @@
     "shell": {
         "fileName": "shell"
     },
+    "sleep": {
+        "fileName": "sleep"
+    },
     "fileSystem": {
         "fileName": "fileSystem"
     },

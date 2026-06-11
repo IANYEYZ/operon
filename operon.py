@@ -1,13 +1,17 @@
 import operon
+import operon.server
 import yaml
 import json
 from pathlib import Path
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.panel import Panel
 
 srcPath = Path(__file__).parent
 
 if __name__ == "__main__":
     llm = operon.defaultLLM
-    server = operon.toolServer
+    server = operon.server.toolServer
     command = input(">>> ")
     if command == ":exit": exit(0)
     msg = operon.USER(yaml.dump({
@@ -18,7 +22,16 @@ if __name__ == "__main__":
         res = llm(msg)
         # print(res)
         if res["type"] == "Print":
-            print("LLM: ", res["data"])
+            text = res["data"]
+            console = Console()
+            md = Markdown(text)
+            console.print(
+                Panel(
+                    md,
+                    title="LLM",
+                    border_style="blue"
+                )
+            )
             msg = operon.USER(yaml.dump({
                 "type": "None",
                 "data": None

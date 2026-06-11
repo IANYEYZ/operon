@@ -48,7 +48,7 @@ The result will go for each Branch, and tell you:
 Either one will immediately return, leaving Branches running in the back. Note that you will not get notified when a Branch finishes, so keep in mind to check regularly
 
 2. END:
-indicate that you have ended current task and need to return to your father branch
+indicate that you have ended current task and need to return to your father branch, note that after this tool call, you'll be turned off
 DO NOT FOLLOW THIS UNDER OTHER CALLS, ALWAYS PUT IT IN A INDEPENDENT RESPONSE
 format of such tool call:
 
