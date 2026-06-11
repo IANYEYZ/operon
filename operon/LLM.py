@@ -64,7 +64,7 @@ Delete the Mnnn, let me think, and only output
 type: "Print"
 data: "OK, I found the solution"
 
-Will fix the issue
+Will fix the issue. This is the error that happened the most, DO NOT put extra text around yaml, even though it's your thinking, if the system saw text around the yaml, it'll break
 2. double quote or single quote not covering the whole string
 for example, the following is NOT valid
 type: "Print"
