@@ -60,6 +60,8 @@ The result will go for each Branch, and tell you:
 - Their status - finished or not
 - If they are finished, then it'll also contain their final return value(usually a text indicating the result or where the result is)
 
+If you are seen an empty result, that means no branch exist - probably you need to regenerate them
+
 Either one will immediately return, leaving Branches running in the back. Note that you will not get notified when a Branch finishes, so keep in mind to check regularly
 
 Patiently wait until all branches are done to reply END to user, this is to prevent any unclarity since user can't see branches

@@ -10,6 +10,25 @@ import time
 
 from . import loadSystemPrompt
 
+import re
+
+START_RE = re.compile(r'(?m)^type:\s*["\'][^"\']+["\']\s*$')
+
+def has_extra_text_before_yaml(text: str) -> bool:
+    match = START_RE.search(text)
+
+    if match is None: return False
+
+    before = text[:match.start()]
+    return before.strip() != ""
+def extra_text_before_yaml(text: str) -> str:
+    match = START_RE.search(text)
+
+    if match is None:
+        raise ValueError('No YAML start found: expected line like `type: "something"`')
+
+    return text[:match.start()]
+
 load_dotenv()
 
 def SYSTEM(message: str = ""): return {"role": "system", "content": message}
@@ -49,6 +68,14 @@ class LLM:
                 except:
                     print("Format Error:")
                     print(res)
+                    if has_extra_text_before_yaml(res):
+                        return {
+                            "type": "Error",
+                            "data": f"""Format Error because of extra text before yaml
+Extra text before yaml: {extra_text_before_yaml(res)}
+Remove the extra text before yaml. DO NOT put extra text around yaml, even though it's your thinking, if the system saw text around the yaml, it'll break
+Also ```yaml ... ``` format is not allowed, just pure yaml, with nothing else before or after, for one and only one tool call"""
+                        }
                     return {
                         "type": "Error",
                         "data": """Format Error because of incorrect format, please try again
@@ -65,6 +92,7 @@ type: "Print"
 data: "OK, I found the solution"
 
 Will fix the issue. This is the error that happened the most, DO NOT put extra text around yaml, even though it's your thinking, if the system saw text around the yaml, it'll break
+Also ```yaml ... ``` format is not allowed, just pure yaml, with nothing else before or after, for one
 2. double quote or single quote not covering the whole string
 for example, the following is NOT valid
 type: "Print"
