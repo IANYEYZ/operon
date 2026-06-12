@@ -101,7 +101,7 @@ class ToolServer:
                     text=True,
                     encoding="utf-8",
                     errors="replace",
-                    timeout=30
+                    timeout=10
                 )
                 return yaml.dump({
                     "type": "Result",

@@ -1,6 +1,7 @@
 Shell:
 Run one or many shell commands
 Note that change on cwd or env vairables won't be saved across multiple Shell runs
+Note that make sure the command you run will stop, don't run command that will never stop on its own(starting a server, for example, will not stop on its own). In short, this is only for short commands, not something like starting a server
 
 type: "Shell"
 data:
