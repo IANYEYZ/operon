@@ -2,6 +2,7 @@
 Construct a LLM class
 Also parse the response
 """
+
 from openai import OpenAI
 import yaml
 import os
@@ -16,17 +17,14 @@ START_RE = re.compile(r'(?m)^type:\s*["\'][^"\']+["\']\s*$')
 
 def has_extra_text_before_yaml(text: str) -> bool:
     match = START_RE.search(text)
-
     if match is None: return False
-
     before = text[:match.start()]
     return before.strip() != ""
+
 def extra_text_before_yaml(text: str) -> str:
     match = START_RE.search(text)
-
     if match is None:
         raise ValueError('No YAML start found: expected line like `type: "something"`')
-
     return text[:match.start()]
 
 load_dotenv()
@@ -39,9 +37,7 @@ class LLM:
     def __init__(self, apikey: str, model: str, systemPrompt = loadSystemPrompt(), gId = 0, url: str = "https://api.deepseek.com"):
         self.client = OpenAI(api_key=apikey, base_url=url)
         self.model = model
-        self.messages = [
-            SYSTEM(systemPrompt)
-        ]
+        self.messages = [SYSTEM(systemPrompt)]
         self.gId = gId
     def setMessages(self, messages):
         self.messages = messages
@@ -55,14 +51,13 @@ class LLM:
                     stream = False,
                     temperature=0.3
                 ).choices[0].message.content
-                # print("Raw LLM Response: ", res)
-                # print("---")
                 if saveMessage:
                     self.messages.append(ASSISTANT(res))
                 try:
-                    print(f"Parsed LLM Response from {self.gId}: ", yaml.safe_load(res))
-                    if isinstance(yaml.safe_load(res), dict):
-                        return yaml.safe_load(res)
+                    parsed = yaml.safe_load(res)
+                    print(f"Parsed LLM Response from {self.gId}: ", parsed)
+                    if isinstance(parsed, dict):
+                        return parsed
                     else:
                         raise Exception("")
                 except:
@@ -71,41 +66,11 @@ class LLM:
                     if has_extra_text_before_yaml(res):
                         return {
                             "type": "Error",
-                            "data": f"""Format Error because of extra text before yaml
-Extra text before yaml: {extra_text_before_yaml(res)}
-Remove the extra text before yaml. DO NOT put extra text around yaml, even though it's your thinking, if the system saw text around the yaml, it'll break
-Also ```yaml ... ``` format is not allowed, just pure yaml, with nothing else before or after, for one and only one tool call"""
+                            "data": f"Format Error: extra text before YAML.\n\nExtra text before yaml: {extra_text_before_yaml(res)}\n\nYour output must start with `type:` on the very first line. No explanations, no thinking out loud, no markdown. Just pure YAML, starting at line 1.\n\nRedo waht you want to do"
                         }
                     return {
                         "type": "Error",
-                        "data": """Format Error because of incorrect format, please try again
-Possible format errors:
-1. there's extra text around the yaml. Stop putting text(even apologize) before yaml, and the issue will be solved. For example, the following is NOT valid, because of the "Mnnn, let me think" before the yaml
-
-Mnnn, let me think
-type: "Print"
-data: "OK, I found the solution"
-
-Delete the Mnnn, let me think, and only output
-
-type: "Print"
-data: "OK, I found the solution"
-
-Will fix the issue. This is the error that happened the most, DO NOT put extra text around yaml, even though it's your thinking, if the system saw text around the yaml, it'll break
-Also ```yaml ... ``` format is not allowed, just pure yaml, with nothing else before or after, for one
-2. double quote or single quote not covering the whole string
-for example, the following is NOT valid
-type: "Print"
-data: "Hello there" This is a test
-because the double quote incorrectly stopped early
-It's also recommended that, for multi-line string, use the | grammar in yaml
-3. more than one tool calls being put together. Seperate them into multiple calls, first call the first one, then call the second one, etc.
-4. a format different of yaml is used. For example, the following is NOT valid
-<print>
-OK, let's make this
-</print>
-In short, your output need to be correct yaml, with nothing else before or after, for one and only one tool call
-Note that this errored message won't be displayed to user, find the format issue, and manually redo what you want to do"""
+                        "data": "Format Error: invalid YAML output.\n\nYour output must be a single valid YAML tool call with nothing before or after.\nCommon issues:\n- Extra text around the YAML\n- Missing or broken quotes\n- Multiple tool calls in one response\n- Wrong format (not YAML)\n\nFix the format and retry."
                     }
             except Exception as e:
                 last_err = e

@@ -21,7 +21,7 @@ if __name__ == "__main__":
     while True:
         res = llm(msg)
         # print(res)
-        if res["type"] == "Print":
+        if res.get("type") == "Print":
             text = res["data"]
             console = Console()
             md = Markdown(text)
@@ -36,14 +36,14 @@ if __name__ == "__main__":
                 "type": "None",
                 "data": None
             }))
-        elif res["type"] == "END":
+        elif res.get("type") == "END":
             command = input(">>> ")
             if command == ":exit": break
             msg = operon.USER(yaml.dump({
                 "type": "Message",
                 "data": command
             }))
-        elif res["type"] == "AskUser":
+        elif res.get("type") == "AskUser":
             print("LLM: ", res["data"])
             command = input(">>> ")
             if command == ":exit": break
@@ -51,9 +51,9 @@ if __name__ == "__main__":
                 "type": "Message",
                 "data": command
             }))
-        elif res["type"] == "Error":
+        elif res.get("type") == "Error":
             msg = operon.USER(res["data"])
-        elif res["type"] == "MetaError":
+        elif res.get("type") == "MetaError":
             print("Error happens because of system error")
             print("Enter to retry", end = "\n")
             input()

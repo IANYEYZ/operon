@@ -21,7 +21,7 @@ def loadFromFile(pth):
         return result
 
 def loadPrompt(name):
-    return open(f"{srcPath}/prompt/{name}").read()
+    return open(f"{srcPath}/prompt/{name}", encoding = "utf-8").read()
 
 def loadSystemPrompt():
     template = loadPrompt("SYSTEM_TEMPLATE")

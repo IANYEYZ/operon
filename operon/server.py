@@ -42,6 +42,11 @@ class ToolServer:
         self.tasks = json.loads(open(srcPath / "task.json").read())
         self.scratchPad = ""
     def __call__(self, value):
+        if value.get("type") == None:
+            return yaml.dump({
+                "type": "Error",
+                "data": "Missing `type` field in tool call"
+            })
         if value["type"] == "Python":
             buffer = io.StringIO()
             curCwd = os.getcwd()
