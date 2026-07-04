@@ -34,7 +34,8 @@ def USER(message: str = ""): return {"role": "user", "content": message}
 def ASSISTANT(message: str = ""): return {"role": "assistant", "content": message}
 
 class LLM:
-    def __init__(self, apikey: str, model: str, systemPrompt = loadSystemPrompt(), gId = 0, url: str = "https://api.deepseek.com"):
+    def __init__(self, apikey: str, model: str, systemPrompt = loadSystemPrompt()
+                 , gId = 0, url: str = "https://api.deepseek.com"):
         self.client = OpenAI(api_key=apikey, base_url=url)
         self.model = model
         self.messages = [SYSTEM(systemPrompt)]
@@ -51,10 +52,35 @@ class LLM:
                     stream = False,
                     temperature=0.3
                 ).choices[0].message.content
+                # print(res)
                 if saveMessage:
                     self.messages.append(ASSISTANT(res))
                 try:
-                    parsed = yaml.safe_load(res)
+                    # Prefer the first YAML document that parses to a mapping.
+                    # print(res)
+                    parsed = None
+                    multiple = False
+                    try:
+                        docs = list(yaml.safe_load_all(res))
+                        if len(docs) > 1: multiple = True
+                        for doc in docs:
+                            if isinstance(doc, dict):
+                                parsed = doc
+                                break
+                    except Exception:
+                        parsed = None
+
+                    # Fallback: single-document parse
+                    if parsed is None:
+                        parsed = yaml.safe_load(res)
+                    
+                    if multiple:
+                        return {
+                            "type": "Error",
+                            "data": """Format Error: multiple tool calls detected
+All these tool calls are canceled, manually redo them one by one"""
+                        }
+
                     print(f"Parsed LLM Response from {self.gId}: ", parsed)
                     if isinstance(parsed, dict):
                         return parsed
@@ -83,4 +109,4 @@ class LLM:
             "data": f"LLM API Error after 3 retries: {last_err}"
         }
 
-defaultLLM = LLM(apikey = os.getenv("DEEPSEEK_API_KEY"), model = "deepseek-chat")
+defaultLLM = LLM(apikey = os.getenv("LONGCAT_API_KEY"), model = "LongCat-2.0", url = "https://api.longcat.chat/openai")

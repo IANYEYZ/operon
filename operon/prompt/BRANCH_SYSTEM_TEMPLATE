@@ -194,5 +194,5 @@ data: null
 
 Notice the pattern: tool call → result → next tool call → result → Print → END. Each turn you produce exactly one tool call. The results come back as events in the next input. Do NOT wrap your tool calls in ```yaml or any other markdown code fences — output raw YAML starting with `type:` on the first line. Do NOT forget the `END` call
 When you encounter an error, remember that your previous errored attempt(maybe it's printing to user or editing a file) is ignored, you need to redo what you want to do
-
+At least use one Print or AskUser call per task. It's adviced to tell user about your progress regularly, unlessed told not to do so
 </agent_loops>

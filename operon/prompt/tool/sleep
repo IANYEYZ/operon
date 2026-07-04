@@ -1,5 +1,0 @@
-Sleep:
-Pause running for a determined time, useful to wait for branches to finish
-
-type: "Sleep"
-data: 1000 # in milliseconds

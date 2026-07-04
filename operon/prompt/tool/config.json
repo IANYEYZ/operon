@@ -1,12 +1,12 @@
 {
     "python": {
-        "fileName": "python"
+        "fileName": "python.py"
     },
     "shell": {
-        "fileName": "shell"
+        "fileName": "shell.py"
     },
     "sleep": {
-        "fileName": "sleep"
+        "fileName": "sleep.py"
     },
     "fileSystem": {
         "fileName": "fileSystem"

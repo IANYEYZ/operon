@@ -12,6 +12,7 @@ srcPath = Path(__file__).parent
 if __name__ == "__main__":
     llm = operon.defaultLLM
     server = operon.server.toolServer
+    operon.server.loadFromConfig(server, srcPath / "operon" / "prompt" / "tool")
     command = input(">>> ")
     if command == ":exit": exit(0)
     msg = operon.USER(yaml.dump({

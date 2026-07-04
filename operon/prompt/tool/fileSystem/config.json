@@ -1,23 +1,23 @@
 {
     "readFile": {
-        "fileName": "readFile"
+        "fileName": "readFile.py"
     },
     "writeFile": {
-        "fileName": "writeFile"
+        "fileName": "writeFile.py"
     },
     "mkdir": {
-        "fileName": "mkdir"
+        "fileName": "mkdir.py"
     },
     "ls": {
-        "fileName": "ls"
+        "fileName": "ls.py"
     },
     "move": {
-        "fileName": "move"
+        "fileName": "move.py"
     },
     "patchFile": {
-        "fileName": "patchFile"
+        "fileName": "patchFile.py"
     },
     "searchInFiles": {
-        "fileName": "searchInFiles"
+        "fileName": "searchInFiles.py"
     }
 }

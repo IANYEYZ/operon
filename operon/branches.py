@@ -1,9 +1,12 @@
 from . import LLM, USER
-from .server import ToolServer
+from .server import ToolServer, loadFromConfig
 from concurrent.futures import ThreadPoolExecutor
 import os
 import yaml
 from . import loadBranchSystemPrompt
+from pathlib import Path
+
+srcPath = Path(__file__).parent
 
 branchesPool = ThreadPoolExecutor(max_workers=10)
 branches = {}
@@ -23,6 +26,7 @@ def branch(goal):
     llm = LLM(apikey = os.getenv("DEEPSEEK_API_KEY"), model = "deepseek-chat",\
                gId = currentID, systemPrompt = loadBranchSystemPrompt())
     server = ToolServer()
+    loadFromConfig(server, srcPath / "prompt" / "tool")
     print(f"Branch {currentID} started with goal: {goal}")
     msg = USER(yaml.dump({
         "type": "Goal",

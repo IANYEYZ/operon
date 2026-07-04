@@ -1,14 +1,14 @@
 {
     "task": {
-        "fileName": "task"
+        "fileName": "task.py"
     },
     "plan": {
-        "fileName": "plan"
+        "fileName": "plan.py"
     },
     "memory": {
-        "fileName": "memory"
+        "fileName": "memory.py"
     },
     "scratchPad": {
-        "fileName": "scratchPad"
+        "fileName": "scratchPad.py"
     }
 }

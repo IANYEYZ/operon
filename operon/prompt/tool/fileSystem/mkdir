@@ -1,9 +1,0 @@
-Mkdir:
-Create a new directory
-The path should always be relative path, i.e. it should always start with ./
-format of such tool call:
-
-type: "Mkdir"
-data: "path of the new directory"
-
-The response for this call will be a type none result
