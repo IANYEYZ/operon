@@ -1,65 +1,565 @@
-import operon
-import operon.server
-import yaml
-import json
+"""
+OPERON
+"""
 from pathlib import Path
-from rich.console import Console
-from rich.markdown import Markdown
-from rich.panel import Panel
+import json
+import importlib.util
+import inspect
+from openai import OpenAI
+import yaml
+import os
+from dotenv import load_dotenv
+import time
+import re
+from concurrent.futures import ThreadPoolExecutor
+from functools import wraps
+import asyncio
+import websockets
 
 srcPath = Path(__file__).parent
+toolPath = srcPath / "prompt" / "tool"
+skillPath = srcPath / "prompt" / "skill"
 
-if __name__ == "__main__":
-    llm = operon.defaultLLM
-    server = operon.server.toolServer
-    operon.server.loadFromConfig(server, srcPath / "operon" / "prompt" / "tool")
-    command = input(">>> ")
-    if command == ":exit": exit(0)
-    msg = operon.USER(yaml.dump({
-        "type": "Message",
-        "data": command
+def loadFromFile(pth):
+    if not pth.exists():
+        return []
+    path = pth
+    if path.is_file():
+        if path.suffix == ".py":
+            # print(path)
+            spec = importlib.util.spec_from_file_location(path.stem, path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            classes = [
+                cls
+                for _, cls in inspect.getmembers(module, inspect.isclass)
+                if cls.__module__ == module.__name__
+            ]
+            cls = classes[0]
+            return cls.prompt
+        return [open(path).read()]
+    else:
+        config = json.load(open(path / "config.json"))
+        result = []
+        for k in config.keys():
+            result.extend(loadFromFile(pth / config.get(k).get("fileName")))
+        return result
+def loadFromFunctionOrClass(cls):
+    if inspect.isclass(cls):
+        return cls.prompt
+    else:
+        return inspect.getdoc(cls)
+def loadPrompt(name):
+    return open(f"{srcPath}/prompt/{name}", encoding = "utf-8").read()
+systemTemplate = """You are Operon.
+Operon is an AI runtime embedded inside a host application.
+You are not a standalone chatbot.
+You exist to help the host application accomplish its goals.
+Every host application is different.
+Adapt to the environment, the available tools, and the configured skills.
+Your objective is to solve problems reliably.
+When appropriate:
+- reason before acting
+- prefer tools over assumptions
+- verify facts whenever possible
+- avoid hallucinating information
+- gracefully recover from failures
+- finish tasks rather than merely describing them
+
+<runtime>
+{{INSERT_RUNTIME}}
+</runtime>
+
+<language>
+Default working language: English
+If the host uses a different language, change working language to that
+Natural language arguments in tool calls must be in the working language
+Avoid using pure lists and bullet points format in any language, in any scenario unless absolutely necessary
+CRITICAL: Your output must be ONLY a valid YAML tool call. Do NOT include any text before or after the YAML. Do NOT explain your reasoning. Do NOT use markdown code blocks. The first character of your output must be `type:`. If multi-line string is necessary in a YAML, use | grammar
+</language>
+
+<system>
+CRITICAL: Your output must be ONLY a valid YAML tool call. Do NOT include any text before or after the YAML. Do NOT explain your reasoning. Do NOT use markdown code blocks. The first character of your output must be `type:`. If multi-line string is necessary in a YAML, use | grammar
+
+Example of multi-line string with |:
+
+type: "WriteFile"
+data:
+  name: "./hello.py"
+  content: |
+    def hello():
+        print("Hello, world!")
+
+    hello()
+  type: "w"
+
+The `|` keeps newlines and the trailing newline. Indent the content 2 spaces relative to the key. Use `|-` to strip the final newline, or `|+` to keep it explicitly.
+<tools>
+Here's the collection of tools you can call, each with how organize a call.
+
+1. Reason:
+Make a bit of reasoning.
+
+Use Reason whenever intermediat reasoning, planning or partial results will improve future decisions
+
+Format:
+
+type: "Reason"
+data: "Content of this reasoning"
+
+The result will always be:
+
+type: "Result"
+data: "None"
+
+Reasoning is only for you to think, thus no return value provided
+
+2. END:
+Indicate that the current run has completed.
+
+Call END only when you have reached a final state and no further tool calls or reasoning are required for this run.
+
+After calling END, the runtime will terminate the current execution and return control to the host application.
+
+The END tool must always be called alone. Never combine it with any other tool call or output.
+
+Format:
+
+type: "END"
+data: null
+
+{{INSERT_TOOLS}}
+
+Note that you must follow the format of the tools exactly
+</tools>
+
+{{INSERT_SKILLS_PROMPT}}
+
+<input_format>
+You will receive a sequence of runtime events as input.
+Each event represents something that happened during the current run.
+Common event types include:
+1. Message
+   Input or instruction provided by the host application.
+2. Result
+   Result returned by a tool call.
+   The result may be null if the tool produced no return value.
+3. Error
+   Error produced by the runtime, such as invalid output format, failed tool execution, unavailable tool, timeout, or rejected action.
+4. SystemEvent
+   Other events generated by Operon or the host application.
+Input is provided as valid YAML.
+Each event uses this format:
+
+type: "<event type>"
+data:
+  ...
+</input_format>
+
+<output_format>
+You must output exactly one tool call as valid YAML. No text before, no text after, no markdown formatting. The output must start with `type:` on line 1.
+</output_format>
+
+<agent_loop>
+You operate inside a managed runtime loop.
+For each iteration:
+
+1. Analyze all received events.
+2. Determine the single most appropriate next tool call.
+3. Emit exactly one tool call.
+4. Wait for the runtime to execute that tool.
+5. Repeat until the current objective has been completed.
+
+Rules:
+- Emit exactly one tool call per response.
+- Never emit multiple tool calls.
+- The runtime will execute the tool and return its result as a future event.
+- If a tool fails, treat it as not having been executed and choose the next appropriate action.
+- Use planning or scratchpad tools when helpful.
+- Call END only when no further tool calls are necessary.
+</agent_loop>"""
+skillsPrompt = """<skills>
+Skills are reusable natural-language procedures.
+
+A skill is not a tool call.
+A skill does not directly execute anything.
+A skill teaches how to approach a class of tasks.
+Use relevant skills to decide plans, tool choices, verification steps, and final response style.
+
+Skills may mention tools by name, but must not be copied as tool calls.
+Only the <tools> section defines valid tool calls.
+
+In short, a skill teach you how to do current task. Then you can call tools to actually solve that task
+
+{{INSERT_SKILLS}}
+</skills>"""
+def loadSystemPrompt(toolList = loadFromFile(toolPath)
+                     , skillList = loadFromFile(skillPath)
+                     , runtime = ""):
+    template = systemTemplate
+    toolPrompt = ""
+    for pos, i in enumerate(toolList):
+        toolPrompt += f"{pos + 3}: {i}\n\n"
+    skillPrompt = ""
+    for i in skillList:
+        skillPrompt += f"{i}\n"
+    if len(skillList) == 0:
+        skillPrompt = ""
+    else:
+        skillPrompt = skillsPrompt.replace(r"{{INSERT_SKILLS}}", skillPrompt)
+    template = template.replace(r"{{INSERT_TOOLS}}", toolPrompt)\
+                        .replace(r"{{INSERT_SKILLS_PROMPT}}", skillPrompt)\
+                        .replace(r"{{INSERT_RUNTIME}}", runtime)
+    return template
+def loadBranchSystemPrompt():
+    template = loadPrompt("BRANCH_SYSTEM_TEMPLATE")
+    toolList = loadFromFile(toolPath)
+    skillList = loadFromFile(skillPath)
+    toolPrompt = ""
+    for pos, i in enumerate(toolList):
+        toolPrompt += f"{pos + 3}: {i}\n\n"
+    skillPrompt = ""
+    for i in skillList:
+        skillPrompt += f"{i}\n"
+    template = template.replace(r"{{INSERT_TOOLS}}", toolPrompt).replace(r"{{INSERT_SKILLS}}", skillPrompt)
+    return template
+
+START_RE = re.compile(r'(?m)^type:\s*["\'][^"\']+["\']\s*$')
+def has_extra_text_before_yaml(text: str) -> bool:
+    match = START_RE.search(text)
+    if match is None: return False
+    before = text[:match.start()]
+    return before.strip() != ""
+def extra_text_before_yaml(text: str) -> str:
+    match = START_RE.search(text)
+    if match is None:
+        raise ValueError('No YAML start found: expected line like `type: "something"`')
+    return text[:match.start()]
+load_dotenv()
+def SYSTEM(message: str = ""): return {"role": "system", "content": message}
+def USER(message: str = ""): return {"role": "user", "content": message}
+def ASSISTANT(message: str = ""): return {"role": "assistant", "content": message}
+class LLM:
+    def __init__(self, apikey: str, model: str, systemPrompt = loadSystemPrompt()
+                 , gId = 0, url: str = "https://api.deepseek.com"):
+        self.client = OpenAI(api_key=apikey, base_url=url)
+        self.model = model
+        self.messages = [SYSTEM(systemPrompt)]
+        self.gId = gId
+    def setMessages(self, messages):
+        self.messages = messages
+    def __call__(self, userMessage = None, saveMessage: bool = True):
+        if userMessage != None: self.messages.append(userMessage)
+        for attempt in range(3):
+            try:
+                res = self.client.chat.completions.create(
+                    model = self.model,
+                    messages = self.messages,
+                    stream = False,
+                    temperature=0.3
+                ).choices[0].message.content
+                # print(res)
+                if saveMessage:
+                    self.messages.append(ASSISTANT(res))
+                try:
+                    # Prefer the first YAML document that parses to a mapping.
+                    # print(res)
+                    parsed = None
+                    multiple = False
+                    try:
+                        docs = list(yaml.safe_load_all(res))
+                        if len(docs) > 1: multiple = True
+                        for doc in docs:
+                            if isinstance(doc, dict):
+                                parsed = doc
+                                break
+                    except Exception:
+                        parsed = None
+                    # Fallback: single-document parse
+                    if parsed is None:
+                        parsed = yaml.safe_load(res)
+                    if multiple:
+                        return {
+                            "type": "Error",
+                            "data": """Format Error: multiple tool calls detected
+All these tool calls are canceled, manually redo them one by one"""
+                        }
+
+                    print(f"Parsed LLM Response from {self.gId}: ", parsed)
+                    if isinstance(parsed, dict):
+                        return parsed
+                    else:
+                        raise Exception("")
+                except:
+                    print("Format Error:")
+                    print(res)
+                    if has_extra_text_before_yaml(res):
+                        return {
+                            "type": "Error",
+                            "data": f"Format Error: extra text before YAML.\n\nExtra text before yaml: {extra_text_before_yaml(res)}\n\nYour output must start with `type:` on the very first line. No explanations, no thinking out loud, no markdown. Just pure YAML, starting at line 1.\n\nRedo waht you want to do"
+                        }
+                    return {
+                        "type": "Error",
+                        "data": "Format Error: invalid YAML output.\n\nYour output must be a single valid YAML tool call with nothing before or after.\nCommon issues:\n- Extra text around the YAML\n- Missing or broken quotes\n- Multiple tool calls in one response\n- Wrong format (not YAML)\n\nFix the format and retry."
+                    }
+            except Exception as e:
+                last_err = e
+                print(f"SYSTEM: LLM {self.gId} call failed, attempt {attempt + 1}/3: {e}")
+                if attempt < 2:
+                    time.sleep(1)
+        return {
+            "type": "MetaError",
+            "data": f"LLM API Error after 3 retries: {last_err}"
+        }
+defaultLLM = LLM(apikey = os.getenv("DEEPSEEK_API_KEY"), model = "deepseek-chat")
+
+class Error:
+    def __init__(self, content):
+        self.content = content
+class Str:
+    def __init__(self): pass
+    def validate(self, value): return isinstance(value, str)
+class Int:
+    def __init__(self): pass
+    def validate(self, value): return isinstance(value, int)
+class Float:
+    def __init__(self): pass
+    def validate(self, value): return isinstance(value, float)
+class Number:
+    def __init__(self): pass
+    def validate(self, value):
+        return isinstance(value, int) or isinstance(value, float)
+class Bool:
+    def __init__(self): pass
+    def validate(self, value): return isinstance(value, bool)
+class Obj:
+    def __init__(self, **kwargs):
+        self.record = kwargs
+    def validate(self, value):
+        for k in self.record.keys():
+            if not self.record.get(k).validate(value.get(k)):
+                return False
+        return True
+class Literal:
+    def __init__(self, *literals): self.literals = literals
+    def validate(self, value):
+        if isinstance(self.literals, list):
+            for l in self.literals:
+                if value == l:
+                    return True
+            return False
+        else:
+            return value == self.literals
+class OneOf:
+    def __init__(self, *shapes): self.shapes = shapes
+    def validate(self, value):
+        for s in self.shapes:
+            if s.validate(value):
+                return True
+        return False
+def tool(shape = None):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if shape != None:
+                if not shape.validate(*args):
+                    return yaml.dump({
+                        "type": "Error",
+                        "data": "The content of the `data` field of this tool call is formed incorrectly"
+                    })
+            result = func(*args, **kwargs)
+            if isinstance(result, Error):
+                return yaml.dump({
+                    "type": "Error",
+                    "data": result.content
+                })
+            return yaml.dump({
+                "type": "Result",
+                "data": result
+            })
+        return wrapper
+    return decorator
+rootPath = Path(__file__).parent / "file"
+class ToolServer:
+    def __init__(self):
+        self.tasks = {}
+        self.scratchPad = ""
+        self.tools = {}
+    def register(self, toolPathOrClass):
+        cls = None
+        if isinstance(toolPathOrClass, str):
+            toolPath = toolPathOrClass
+            toolPath = Path(toolPath)
+            # print(toolPath)
+            spec = importlib.util.spec_from_file_location(toolPath.stem, toolPath)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            classes = [
+                cls
+                for _, cls in inspect.getmembers(module, inspect.isclass)
+                if cls.__module__ == module.__name__
+            ]
+            cls = classes[0]
+        else:
+            cls = toolPathOrClass
+        if inspect.isclass(cls):
+            instance = cls()
+            self.tools[cls.name] = lambda value: instance.run(value)
+        else:
+            self.tools[cls.__name__] = cls
+    def __call__(self, value):
+        if value.get("type") == None:
+            return yaml.dump({
+                "type": "Error",
+                "data": "Missing `type` field in tool call"
+            })
+        if value.get("data") == None:
+            return yaml.dump({
+                "type": "Error",
+                "data": "Missing `data` field in tool call"
+            })
+        if value["type"] == "Branch":
+            if value["data"]["type"] == "Create":
+                addBranch(value["data"]["goal"])
+                return yaml.dump({
+                    "type": "Result",
+                    "data": None
+                })
+            else:
+                print(branches)
+                return yaml.dump({
+                    "type": "Result",
+                    "data": branches
+                })
+        elif value["type"] == "Reason":
+            return yaml.dump({
+                "type": "Result",
+                "data": None
+            })
+        else:
+            if self.tools.get(value["type"]) != None:
+                res = self.tools[value["type"]](value["data"])
+                # print(res)
+                return res
+            return yaml.dump({
+                "type": "Error",
+                "value": "Unknown tool call, did you miss spelled or accidently write the wrong call?"
+            })
+toolServer = ToolServer()
+def loadFromConfig(toolServer: ToolServer, path: Path):
+    if path.is_file():
+        if path.suffix == ".py":
+            toolServer.register(path)
+    else:
+        config = json.load(open(path / "config.json"))
+        result = []
+        for k in config.keys():
+            loadFromConfig(toolServer, path / config.get(k).get("fileName"))
+        return result
+
+
+branchesPool = ThreadPoolExecutor(max_workers=10)
+branches = {}
+branchID = 1
+def branch(goal):
+    print("Running Branch with goal: ", goal)
+    global branchID, branches
+    currentID = branchID
+    branchID += 1
+    branches.update({
+        currentID: {
+            "status": "Running"
+        }
+    })
+    print(branches)
+    llm = LLM(apikey = os.getenv("DEEPSEEK_API_KEY"), model = "deepseek-chat",\
+               gId = currentID, systemPrompt = loadBranchSystemPrompt())
+    server = ToolServer()
+    loadFromConfig(server, srcPath / "prompt" / "tool")
+    print(f"Branch {currentID} started with goal: {goal}")
+    msg = USER(yaml.dump({
+        "type": "Goal",
+        "data": goal
     }))
     while True:
+        print(f"Branch {currentID} is running with goal: {goal}")
         res = llm(msg)
         # print(res)
-        if res.get("type") == "Print":
-            text = res["data"]
-            console = Console()
-            md = Markdown(text)
-            console.print(
-                Panel(
-                    md,
-                    title="LLM",
-                    border_style="blue"
-                )
-            )
-            msg = operon.USER(yaml.dump({
-                "type": "None",
-                "data": None
-            }))
-        elif res.get("type") == "END":
-            command = input(">>> ")
-            if command == ":exit": break
-            msg = operon.USER(yaml.dump({
-                "type": "Message",
-                "data": command
-            }))
-        elif res.get("type") == "AskUser":
-            print("LLM: ", res["data"])
-            command = input(">>> ")
-            if command == ":exit": break
-            msg = operon.USER(yaml.dump({
-                "type": "Message",
-                "data": command
-            }))
-        elif res.get("type") == "Error":
-            msg = operon.USER(res["data"])
-        elif res.get("type") == "MetaError":
-            print("Error happens because of system error")
+        if res["type"] == "END":
+            branches[currentID] = {
+                "status": "Finished",
+                "return": res["data"]
+            }
+            break
+        elif res["type"] == "Error":
+            msg = USER(res["data"])
+        elif res["type"] == "MetaError":
+            print(f"Error happens because of system error, from Branch {currentID}")
             print("Enter to retry", end = "\n")
             input()
             msg = None
         else:
-            msg = operon.USER(server(res))
-    open(srcPath / "operon" / "task.json", "w").write(json.dumps(server.tasks))
-    
+            msg = USER(server(res))
+def addBranch(goal):
+    branchesPool.submit(lambda: branch(goal))
+
+VALID = "valid"
+DENY = "deny"
+class Controller:
+    def onStep(self):
+        pass
+    def onToolCall(self, toolName):
+        return "valid"
+    def afterToolCall(self, toolName):
+        pass
+defaultController = Controller()
+class Operon:
+    def __init__(self, apikey, model, runtime
+                 , url = "https://api.deepseek.com", controller = defaultController):
+        self.controller = controller
+        self.llm = LLM(apikey = apikey, model = model, systemPrompt = "")
+        self.server = ToolServer()
+        self.runtime = runtime
+        self.tools = []
+        self.initialized = False
+    def use(self, toolClassOrPath):
+        if isinstance(toolClassOrPath, str) or isinstance(toolClassOrPath, Path):
+            self.server.register(toolClassOrPath)
+            self.tools.extend(loadFromFile(toolClassOrPath))
+        else:
+            self.server.register(toolClassOrPath)
+            self.tools.append(loadFromFunctionOrClass(toolClassOrPath))
+        return self
+    def initialize(self):
+        self.initialized = True
+        self.llm.setMessages([SYSTEM(loadSystemPrompt(self.tools,
+                                     loadFromFile(skillPath),
+                                     self.runtime))])
+    def run(self, task):
+        if not self.initialized: self.initialize()
+        msg = USER(yaml.dump({
+            "type": "Message",
+            "data": task
+        }))
+        while True:
+            self.controller.onStep()
+            res = self.llm(msg)
+            if res.get("type") == "END":
+                return
+            elif res.get("type") == "Error":
+                msg = USER(res["data"])
+            elif res.get("type") == "MetaError":
+                return
+            else:
+                valid = None
+                if res.get("type") != None:
+                    valid = self.controller.onToolCall(res["type"])
+                else:
+                    valid = VALID
+                if valid == VALID:
+                    msg = USER(self.server(res))
+                else:
+                    msg = USER(yaml.dump({
+                        "type": "Error",
+                        "data": "Tool Call denied by Host, please change a tool to call"
+                    }))

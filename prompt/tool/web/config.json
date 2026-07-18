@@ -1,8 +1,0 @@
-{
-    "fetch": {
-        "fileName": "fetch.py"
-    },
-    "searchEngine": {
-        "fileName": "searchEngine.py"
-    }
-}
